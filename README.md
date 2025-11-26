@@ -4,7 +4,7 @@
 [![Foundry](https://img.shields.io/badge/Built%20with-Foundry-orange)](https://getfoundry.sh/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Live on Sepolia Testnet: [`0x0E95222d0577b87c08639A8E698cdbf262C529f9`](https://sepolia.etherscan.io/address/0x0E95222d0577b87c08639A8E698cdbf262C529f9)**
+**Live on Sepolia Testnet: [`0xeDab44412d8bdA5fc9b6bec393C5B2F117cB930c`](https://sepolia.etherscan.io/address/0xeDab44412d8bdA5fc9b6bec393C5B2F117cB930c)**
 
 A highly gas-efficient on-chain P2P lending matching engine that automatically deposits unmatched lender liquidity into Aave V3 for passive yield generation. Built with Solidity 0.8.20 and Foundry.
 
@@ -148,14 +148,16 @@ The matching algorithm prioritizes rates, then time:
 
 | Operation | Gas Cost | Notes |
 |-----------|----------|-------|
-| Contract Deployment | ~2,625,000 | One-time cost |
-| depositLender() | ~250,000 | Includes Aave supply |
-| requestBorrow() | ~180,000 | Includes collateral transfer |
-| matchOrders(1) | ~320,000 | Single match with Aave withdrawal |
-| matchOrders(10) | ~2,200,000 | 10 matches (~220k per match) |
-| repayLoan() | ~120,000 | Includes interest calculation |
-| withdraw() | ~65,000 | Simple token transfer |
-| liquidate() | ~110,000 | Collateral redistribution |
+| Contract Deployment | **2,013,270** | One-time cost |
+| depositLender() | **342,080** | Includes Aave supply + bitset update |
+| requestBorrow() | **178,332** | Includes collateral transfer |
+| matchOrders(1) | **181,656 - 369,200** | Single match, varies if Aave withdrawal needed |
+| matchOrders(10) | **~2,200,000** | 10 matches (~220k per match) |
+| repayLoan() | **~120,000** | Interest calculation + transfers |
+| withdraw() | **~65,000** | Simple token transfer |
+| liquidate() | **~110,000** | Collateral redistribution |
+
+**See [GAS_REPORT.md](GAS_REPORT.md) for detailed breakdown and optimization techniques**
 
 *Note: Actual costs may vary based on network conditions and Aave state*
 
@@ -165,10 +167,10 @@ The matching algorithm prioritizes rates, then time:
 
 | Contract | Address |
 |----------|---------|
-| **LendingMatchingEngine** | [`0x0E95222d0577b87c08639A8E698cdbf262C529f9`](https://sepolia.etherscan.io/address/0x0E95222d0577b87c08639A8E698cdbf262C529f9) |
+| **LendingMatchingEngine** | [`0xeDab44412d8bdA5fc9b6bec393C5B2F117cB930c`](https://sepolia.etherscan.io/address/0xeDab44412d8bdA5fc9b6bec393C5B2F117cB930c) |
 | Aave V3 Pool | `0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951` |
-| USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
-| aUSDC | `0x16dA4541aD1807f4443d92D26044C1147406EB80` |
+| LINK Token | `0xf8Fb3713D459D7C1018BD0A49D19b4C44290EBE5` |
+| aLINK | `0x3FfAf50D4F4E96eB78f2407c090b72e86eCaed24` |
 
 ### Deploy Your Own
 
@@ -212,14 +214,14 @@ forge test --fork-url https://ethereum-sepolia-rpc.publicnode.com
 ### For Lenders
 
 ```solidity
-// 1. Approve USDC
-IERC20(USDC).approve(engine, 1000e6);
+// 1. Approve LINK
+IERC20(LINK).approve(engine, 1000 ether);
 
 // 2. Deposit with parameters
-// amount: 1000 USDC
+// amount: 1000 LINK
 // minRateBps: 500 (5% APR minimum)
 // term: 0 (7 days)
-uint256 orderId = engine.depositLender(1000e6, 500, 0);
+uint256 orderId = engine.depositLender(1000 ether, 500, 0);
 
 // Your funds are now in Aave earning yield while waiting for match!
 
@@ -233,20 +235,20 @@ engine.withdraw();
 ### For Borrowers
 
 ```solidity
-// 1. Approve USDC for collateral
-IERC20(USDC).approve(engine, 1333e6);
+// 1. Approve LINK for collateral
+IERC20(LINK).approve(engine, 1333 ether);
 
 // 2. Request loan with collateral
-// amount: 1000 USDC to borrow
+// amount: 1000 LINK to borrow
 // maxRateBps: 600 (6% APR maximum)
 // term: 0 (7 days)
-// collateral: 1333 USDC (75% LTV)
-uint256 orderId = engine.requestBorrow(1000e6, 600, 0, 1333e6);
+// collateral: 1333 LINK (75% LTV)
+uint256 orderId = engine.requestBorrow(1000 ether, 600, 0, 1333 ether);
 
-// 3. After match, use the borrowed USDC
+// 3. After match, use the borrowed LINK
 
 // 4. Repay before term ends
-IERC20(USDC).approve(engine, 1100e6); // principal + interest
+IERC20(LINK).approve(engine, 1100 ether); // principal + interest
 engine.repayLoan(loanId);
 
 // 5. Withdraw collateral
@@ -341,7 +343,7 @@ src/
 ### Prerequisites
 - [Foundry](https://getfoundry.sh/)
 - Sepolia ETH for deployment
-- Sepolia USDC for testing ([Aave Faucet](https://staging.aave.com/faucet/))
+- Sepolia LINK for testing ([Aave Faucet](https://staging.aave.com/faucet/))
 
 ### Build
 ```bash
