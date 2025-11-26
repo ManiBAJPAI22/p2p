@@ -1,0 +1,22 @@
+# Compiler files
+cache/
+out/
+broadcast/
+
+# Dotenv file
+.env
+
+# Node modules
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# Foundry
+lib/
