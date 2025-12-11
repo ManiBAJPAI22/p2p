@@ -8,7 +8,7 @@ export const CONTRACTS = {
 export const NETWORK = {
   chainId: 11155111, // Sepolia
   name: 'Sepolia',
-  rpcUrl: 'https://eth-sepolia.g.alchemy.com/v2/K92udouYRthtCsWJjsPNzw8zjkxicNXg',
+  rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
   blockExplorer: 'https://sepolia.etherscan.io',
 }
 
