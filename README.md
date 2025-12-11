@@ -342,23 +342,55 @@ src/
 
 ### Prerequisites
 - [Foundry](https://getfoundry.sh/)
+- Node.js 18+ and npm
 - Sepolia ETH for deployment
 - Sepolia LINK for testing ([Aave Faucet](https://staging.aave.com/faucet/))
 
-### Build
+### Smart Contract Development
+
+#### Build
 ```bash
 forge build
 ```
 
-### Test
+#### Test
 ```bash
 forge test -vvv
 ```
 
-### Format
+#### Format
 ```bash
 forge fmt
 ```
+
+### Frontend Development
+
+The project includes a Next.js frontend for interacting with the lending protocol.
+
+#### Setup
+```bash
+cd frontend
+npm install
+```
+
+#### Run Development Server
+```bash
+npm run dev
+```
+
+The frontend will be available at [http://localhost:3000](http://localhost:3000)
+
+#### Build for Production
+```bash
+npm run build
+npm start
+```
+
+#### Tech Stack
+- **Next.js 14** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **ethers.js** - Ethereum interaction
 
 ## 📄 License
 
