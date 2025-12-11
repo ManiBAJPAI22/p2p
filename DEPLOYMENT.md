@@ -116,7 +116,7 @@ PRIVATE_KEY=$PRIVATE_KEY forge script script/Interact.s.sol:InteractScript \
 ## 🔍 Verification
 
 View the deployed contract on Etherscan:
-- [Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x0E95222d0577b87c08639A8E698cdbf262C529f9)
+- [Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0xeDab44412d8bdA5fc9b6bec393C5B2F117cB930c)
 
 ## 🎓 Technical Documentation
 
