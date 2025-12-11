@@ -33,10 +33,37 @@ export default function Home() {
   const [loanId, setLoanId] = useState<string>('0')
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      const prov = new ethers.BrowserProvider(window.ethereum as any)
-      setProvider(prov)
+    const initProvider = async () => {
+      if (typeof window !== 'undefined') {
+        const ethereum = (window as any).ethereum
+        if (ethereum) {
+          try {
+            const prov = new ethers.BrowserProvider(ethereum)
+            setProvider(prov)
+            console.log('Provider initialized')
+
+            // Listen for account changes
+            ethereum.on('accountsChanged', (accounts: string[]) => {
+              if (accounts.length > 0) {
+                setAccount(accounts[0])
+                console.log('Account changed:', accounts[0])
+              } else {
+                setAccount('')
+              }
+            })
+
+            // Listen for chain changes
+            ethereum.on('chainChanged', () => {
+              window.location.reload()
+            })
+          } catch (error) {
+            console.error('Error initializing provider:', error)
+          }
+        }
+      }
     }
+
+    initProvider()
   }, [])
 
   useEffect(() => {
@@ -58,36 +85,73 @@ export default function Home() {
   }, [borrowAmount])
 
   const connectWallet = async () => {
-    if (!window.ethereum) {
+    if (typeof window === 'undefined') {
+      alert('Please use a web3-enabled browser!')
+      return
+    }
+
+    // Detect MetaMask specifically
+    const ethereum = (window as any).ethereum
+
+    if (!ethereum) {
       alert('Please install MetaMask!')
       return
     }
 
     try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      // Request accounts
+      const accounts = await ethereum.request({
+        method: 'eth_requestAccounts'
+      })
+
+      if (!accounts || accounts.length === 0) {
+        alert('No accounts found. Please unlock MetaMask.')
+        return
+      }
+
       setAccount(accounts[0])
+      console.log('Connected account:', accounts[0])
 
       // Switch to Sepolia if not already
+      const chainId = '0x' + NETWORK.chainId.toString(16)
+
       try {
-        await window.ethereum.request({
+        await ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x' + NETWORK.chainId.toString(16) }],
+          params: [{ chainId }],
         })
-      } catch (error: any) {
-        if (error.code === 4902) {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x' + NETWORK.chainId.toString(16),
-              chainName: NETWORK.name,
-              rpcUrls: [NETWORK.rpcUrl],
-              blockExplorerUrls: [NETWORK.blockExplorer],
-            }],
-          })
+        console.log('Switched to Sepolia')
+      } catch (switchError: any) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId,
+                chainName: NETWORK.name,
+                rpcUrls: [NETWORK.rpcUrl],
+                blockExplorerUrls: [NETWORK.blockExplorer],
+                nativeCurrency: {
+                  name: 'ETH',
+                  symbol: 'ETH',
+                  decimals: 18,
+                },
+              }],
+            })
+            console.log('Added Sepolia network')
+          } catch (addError) {
+            console.error('Error adding network:', addError)
+            alert('Failed to add Sepolia network. Please add it manually.')
+          }
+        } else {
+          console.error('Error switching network:', switchError)
+          alert('Failed to switch to Sepolia network.')
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error connecting wallet:', error)
+      alert('Failed to connect wallet: ' + (error.message || 'Unknown error'))
     }
   }
 
