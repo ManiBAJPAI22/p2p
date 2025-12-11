@@ -35,12 +35,19 @@ export default function Home() {
   useEffect(() => {
     const initProvider = async () => {
       if (typeof window !== 'undefined') {
-        const ethereum = (window as any).ethereum
+        // Specifically target MetaMask if multiple wallets are installed
+        let ethereum = (window as any).ethereum
+
+        // If multiple wallets, try to get MetaMask specifically
+        if (ethereum?.providers?.length) {
+          ethereum = ethereum.providers.find((p: any) => p.isMetaMask) || ethereum
+        }
+
         if (ethereum) {
           try {
             const prov = new ethers.BrowserProvider(ethereum)
             setProvider(prov)
-            console.log('Provider initialized')
+            console.log('Provider initialized (MetaMask)')
 
             // Listen for account changes
             ethereum.on('accountsChanged', (accounts: string[]) => {
@@ -90,12 +97,22 @@ export default function Home() {
       return
     }
 
-    // Detect MetaMask specifically
-    const ethereum = (window as any).ethereum
+    // Detect MetaMask specifically (handle multiple wallets)
+    let ethereum = (window as any).ethereum
 
     if (!ethereum) {
       alert('Please install MetaMask!')
       return
+    }
+
+    // If multiple wallets are installed, specifically use MetaMask
+    if (ethereum.providers?.length) {
+      ethereum = ethereum.providers.find((p: any) => p.isMetaMask)
+      if (!ethereum) {
+        alert('MetaMask not found. Please make sure MetaMask is installed.')
+        return
+      }
+      console.log('Using MetaMask from multiple providers')
     }
 
     try {
